@@ -1,4 +1,4 @@
-package com.agenda.model;
+package com.agenda.model.enums;
 
 public enum CategoriaEnum {
     MEDICO,

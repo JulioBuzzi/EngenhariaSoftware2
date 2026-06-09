@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.agenda.model.enums.CategoriaEnum;
 
 @Entity
 @Table(name = "profissionais_saude")
