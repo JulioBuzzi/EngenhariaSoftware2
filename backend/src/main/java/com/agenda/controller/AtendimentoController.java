@@ -1,5 +1,7 @@
 package com.agenda.controller;
 
+import com.agenda.model.Atendimento;
+import com.agenda.service.AtendimentoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
