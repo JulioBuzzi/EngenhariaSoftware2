@@ -1,6 +1,7 @@
 package com.agenda.model;
 
 import com.agenda.model.ProfissionalSaude;
+import com.agenda.model.enums.TipoReceitaEnum;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -45,7 +46,7 @@ public class Atendimento {
     )
     @Column(name = "receita")
     @Enumerated(EnumType.STRING)
-    private List<TipoReceita> receitas;
+    private List<TipoReceitaEnum> receitas;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "profissional_saude_id", nullable = false)
