@@ -7,7 +7,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
-// ========== CONTATOS (DEV 1 - Ana) ==========
+// ========== CONTATOS ==========
 export const contatoService = {
   listar: () => api.get('/contatos'),
   buscar: (id) => api.get(`/contatos/${id}`),
@@ -16,13 +16,22 @@ export const contatoService = {
   deletar: (id) => api.delete(`/contatos/${id}`)
 };
 
-// ========== COMPROMISSOS (DEV 2 - Bruno) ==========
+// ========== COMPROMISSOS ==========
 export const compromissoService = {
   listar: () => api.get('/compromissos'),
   buscar: (id) => api.get(`/compromissos/${id}`),
   criar: (compromisso) => api.post('/compromissos', compromisso),
   atualizar: (id, compromisso) => api.put(`/compromissos/${id}`, compromisso),
   deletar: (id) => api.delete(`/compromissos/${id}`)
+};
+
+// ========== PROFISSIONAIS DE SAÚDE ==========
+export const profissionalSaudeService = {
+  listar: () => api.get('/profissionais-saude'),
+  buscar: (id) => api.get(`/profissionais-saude/${id}`),
+  criar: (profissional) => api.post('/profissionais-saude', profissional),
+  atualizar: (id, profissional) => api.put(`/profissionais-saude/${id}`, profissional),
+  deletar: (id) => api.delete(`/profissionais-saude/${id}`)
 };
 
 export default api;
