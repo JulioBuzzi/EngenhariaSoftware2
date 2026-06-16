@@ -1,0 +1,144 @@
+name: CI/CD Pipeline - Agenda Web (Java + React)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ========================================
+  # JOB 1: TESTES DO BACKEND (Java/Spring Boot)
+  # ========================================
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: agenda_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: ☕ Configurar Java 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🧪 Testes Unitários (JUnit 5 + Mockito)
+        run: mvn test -Dtest="*ControllerTest" -B
+
+      - name: 🔗 Testes de Integração (Spring Boot + PostgreSQL)
+        run: mvn test -Dtest="IntegracaoTest" -B
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: agenda_test
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+
+      - name: 📊 Cobertura de código (JaCoCo > 80%)
+        run: |
+          mvn verify -B
+          echo "✅ Relatório de cobertura gerado em target/site/jacoco/"
+
+  # ========================================
+  # JOB 2: TESTES DO FRONTEND (React)
+  # ========================================
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 📦 Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Instalar dependências
+        run: npm ci
+
+      - name: 🧪 Testes unitários React (Jest)
+        run: npm test -- --coverage --watchAll=false
+
+      - name: 🏗️ Build de produção
+        run: npm run build
+
+  # ========================================
+  # JOB 3: BUILD & DEPLOY (CD)
+  # ========================================
+  deploy:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 🐳 Build das imagens Docker
+        run: |
+          docker-compose build
+
+      - name: ✅ Testes de Aceitação (E2E)
+        run: |
+          docker-compose up -d
+          sleep 20
+          # Testa se a API está respondendo
+          curl -f http://localhost:8080/api/contatos || exit 1
+          # Testa se o frontend está acessível
+          curl -f http://localhost:3000 || exit 1
+          echo "✅ Testes de aceitação passaram!"
+          docker-compose down
+
+      - name: 🔑 Login no AWS ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: 📤 Push imagens para Amazon ECR
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          docker tag agenda-web-backend:latest ${{ secrets.ECR_REGISTRY }}/agenda-backend:latest
+          docker tag agenda-web-frontend:latest ${{ secrets.ECR_REGISTRY }}/agenda-frontend:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/agenda-backend:latest
+          docker push ${{ secrets.ECR_REGISTRY }}/agenda-frontend:latest
+
+      - name: 🚀 Deploy para AWS ECS/EC2
+        run: |
+          aws ecs update-service --cluster agenda-cluster --service agenda-backend --force-new-deployment
+          aws ecs update-service --cluster agenda-cluster --service agenda-frontend --force-new-deployment
+
+      - name: 🏁 Health Check
+        run: |
+          sleep 30
+          curl -f http://${{ secrets.AWS_APP_URL }}/api/contatos || exit 1
+          echo "✅ Aplicação em produção na AWS!"
