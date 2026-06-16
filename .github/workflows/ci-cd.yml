@@ -91,7 +91,7 @@ jobs:
         run: npm run build
 
   # ========================================
-  # JOB 3: BUILD & DEPLOY (CD)
+  # JOB 3: DEPLOY (CD) — dispara o deploy no Render
   # ========================================
   deploy:
     needs: [test-backend, test-frontend]
@@ -99,46 +99,25 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - name: 📥 Checkout do código
-        uses: actions/checkout@v4
-
-      - name: 🐳 Build das imagens Docker
+      - name: 🚀 Disparar deploy do backend no Render
         run: |
-          docker-compose build
+          curl -f "${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}"
+          echo "✅ Deploy do backend disparado no Render!"
 
-      - name: ✅ Testes de Aceitação (E2E)
+      - name: 🚀 Disparar deploy do frontend no Render
         run: |
-          docker-compose up -d
-          sleep 20
-          # Testa se a API está respondendo
-          curl -f http://localhost:8080/api/contatos || exit 1
-          # Testa se o frontend está acessível
-          curl -f http://localhost:3000 || exit 1
-          echo "✅ Testes de aceitação passaram!"
-          docker-compose down
+          curl -f "${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}"
+          echo "✅ Deploy do frontend disparado no Render!"
 
-      - name: 🔑 Login no AWS ECR
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+      - name: ⏳ Aguardar propagação do deploy
+        run: sleep 60
 
-      - name: 📤 Push imagens para Amazon ECR
+      - name: 🏁 Health Check do backend em produção
         run: |
-          aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-          docker tag agenda-web-backend:latest ${{ secrets.ECR_REGISTRY }}/agenda-backend:latest
-          docker tag agenda-web-frontend:latest ${{ secrets.ECR_REGISTRY }}/agenda-frontend:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/agenda-backend:latest
-          docker push ${{ secrets.ECR_REGISTRY }}/agenda-frontend:latest
+          curl -f ${{ secrets.RENDER_BACKEND_URL }}/api/contatos || exit 1
+          echo "✅ Backend respondendo em produção no Render!"
 
-      - name: 🚀 Deploy para AWS ECS/EC2
+      - name: 🏁 Health Check do frontend em produção
         run: |
-          aws ecs update-service --cluster agenda-cluster --service agenda-backend --force-new-deployment
-          aws ecs update-service --cluster agenda-cluster --service agenda-frontend --force-new-deployment
-
-      - name: 🏁 Health Check
-        run: |
-          sleep 30
-          curl -f http://${{ secrets.AWS_APP_URL }}/api/contatos || exit 1
-          echo "✅ Aplicação em produção na AWS!"
+          curl -f ${{ secrets.RENDER_FRONTEND_URL }} || exit 1
+          echo "✅ Frontend respondendo em produção no Render!"
