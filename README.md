@@ -57,9 +57,7 @@ npm test
 
 ## Divisão de Trabalho
 
-- **DEV 1 - Ana:** CRUD de Contatos (ContatoController + ContatoList/Form)
-- **DEV 2 - Bruno:** CRUD de Compromissos (CompromissoController + CompromissoList/Form)
+- **DEV 1 - Filipi:** CRUD de Atendimento 
+- **DEV 2 - Julio Cesar:** CRUD de Profissional de saude
+- **DEV 3 - Nathan:** CRUD de Exames Laboratoriais
 
-## Apresentação
-
-Abra o arquivo `apresentacao_completa.html` no navegador para ver a apresentação completa da aula.
