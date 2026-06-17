@@ -2,6 +2,7 @@ package com.agenda.model;
 
 import com.agenda.model.ProfissionalSaude;
 import com.agenda.model.enums.TipoReceitaEnum;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
