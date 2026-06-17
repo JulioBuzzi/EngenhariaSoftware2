@@ -28,5 +28,6 @@ public class ExameLaboratorio {
     @NotNull(message = "O atendimento associado é obrigatório.")
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "atendimento_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Atendimento atendimento;
 }
