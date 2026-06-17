@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Agenda Web (Java + React)
+name: CI/CD Pipeline - Sistema de Saúde (Java + React)
 
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: 📦 Instalar dependências
-        run: npm ci
+        run: npm install
 
       - name: 🧪 Testes unitários React (Jest)
         run: npm test -- --coverage --watchAll=false
@@ -114,7 +114,7 @@ jobs:
 
       - name: 🏁 Health Check do backend em produção
         run: |
-          curl -f ${{ secrets.RENDER_BACKEND_URL }}/api/contatos || exit 1
+          curl -f ${{ secrets.RENDER_BACKEND_URL }}/api/profissionais-saude || exit 1
           echo "✅ Backend respondendo em produção no Render!"
 
       - name: 🏁 Health Check do frontend em produção
