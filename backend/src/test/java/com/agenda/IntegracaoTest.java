@@ -22,9 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Testa a integração real entre Controller → Service → Repository → Banco.
  * Roda com H2 em memória via perfil "test" (application-test.properties).
  *
- * Cobre os 5 domínios do backend:
- *   - Contato
- *   - Compromisso
+ * Cobre os 3 domínios do backend:
  *   - ProfissionalSaude
  *   - Atendimento
  *   - ExameLaboratorio
@@ -55,132 +53,7 @@ class IntegracaoTest {
     }
 
     // =========================================================
-    // 1. CONTATOS
-    // =========================================================
-
-    @Test
-    void deveExecutarFluxoCompletoContato() throws Exception {
-        // CREATE
-        String contatoJson = """
-                {
-                    "nome": "Maria Santos",
-                    "telefone": "31988887777",
-                    "email": "maria@email.com",
-                    "endereco": "Rua X, 10"
-                }
-                """;
-
-        MvcResult criadoResult = mockMvc.perform(post("/api/contatos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(contatoJson))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nome").value("Maria Santos"))
-                .andReturn();
-
-        Long id = extrairId(criadoResult);
-
-        // READ by ID
-        mockMvc.perform(get("/api/contatos/" + id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("maria@email.com"));
-
-        // READ list
-        mockMvc.perform(get("/api/contatos"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
-
-        // UPDATE
-        String contatoAtualizado = """
-                {
-                    "nome": "Maria Santos Silva",
-                    "telefone": "31988887777",
-                    "email": "maria.silva@email.com"
-                }
-                """;
-
-        mockMvc.perform(put("/api/contatos/" + id)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(contatoAtualizado))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Maria Santos Silva"));
-
-        // DELETE
-        mockMvc.perform(delete("/api/contatos/" + id))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensagem").value("Contato removido com sucesso"));
-
-        // Confirma 404 após deleção
-        mockMvc.perform(get("/api/contatos/" + id))
-                .andExpect(status().isNotFound());
-    }
-
-    // =========================================================
-    // 2. COMPROMISSOS
-    // =========================================================
-
-    @Test
-    void deveVincularCompromissoAContato() throws Exception {
-        // Cria contato
-        String contatoJson = """
-                {"nome": "Pedro Lima", "telefone": "31977776666"}
-                """;
-
-        MvcResult contatoResult = mockMvc.perform(post("/api/contatos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(contatoJson))
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        Long contatoId = extrairId(contatoResult);
-
-        // Cria compromisso vinculado
-        String compJson = String.format("""
-                {
-                    "titulo": "Almoço de negócios",
-                    "data": "2025-12-20",
-                    "hora": "12:00",
-                    "contato": {"id": %d}
-                }
-                """, contatoId);
-
-        MvcResult compResult = mockMvc.perform(post("/api/compromissos")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(compJson))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.titulo").value("Almoço de negócios"))
-                .andReturn();
-
-        Long compId = extrairId(compResult);
-
-        // READ
-        mockMvc.perform(get("/api/compromissos/" + compId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contato.id").value(contatoId));
-
-        // UPDATE
-        String compAtualizado = String.format("""
-                {
-                    "titulo": "Jantar de negócios",
-                    "data": "2025-12-20",
-                    "hora": "19:00",
-                    "contato": {"id": %d}
-                }
-                """, contatoId);
-
-        mockMvc.perform(put("/api/compromissos/" + compId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(compAtualizado))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.titulo").value("Jantar de negócios"));
-
-        // DELETE
-        mockMvc.perform(delete("/api/compromissos/" + compId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensagem").value("Compromisso removido com sucesso"));
-    }
-
-    // =========================================================
-    // 3. PROFISSIONAIS DE SAÚDE
+    // 1. PROFISSIONAIS DE SAÚDE
     // =========================================================
 
     @Test
@@ -242,7 +115,7 @@ class IntegracaoTest {
     }
 
     // =========================================================
-    // 4. ATENDIMENTOS
+    // 2. ATENDIMENTOS
     // =========================================================
 
     @Test
@@ -329,7 +202,7 @@ class IntegracaoTest {
     }
 
     // =========================================================
-    // 5. EXAMES LABORATORIAIS
+    // 3. EXAMES LABORATORIAIS
     // =========================================================
 
     @Test
