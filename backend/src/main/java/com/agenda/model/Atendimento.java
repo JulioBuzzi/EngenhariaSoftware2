@@ -48,8 +48,8 @@ public class Atendimento {
     @Enumerated(EnumType.STRING)
     private List<TipoReceitaEnum> receitas;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "atendimento_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "profissional_saude_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Atendimento atendimento;
+    private ProfissionalSaude profissionalSaude;
 }
